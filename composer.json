@@ -1,0 +1,27 @@
+{
+    "name": "beycan/multi-chain",
+    "version": "1.0.0",
+    "description": "A library that allows you to easily connect and transact with many blockchain networks and wallets.",
+    "type": "library",
+    "license": "LGPL-3.0",
+    "authors": [
+        {
+            "name": "Halil Beycan",
+            "email": "halilbeycan0@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/BeycanDeveloper/multi-chain-php/issues"
+    },
+    "homepage": "https://github.com/BeycanDeveloper/multi-chain-php",
+    "require": {
+        "php": ">=7.3",
+        "web3p/ethereum-tx": "^0.4.3",
+        "sc0vu/web3.php": "^0.1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Beycan\\MultiChain\\" : "src"
+        }
+    }
+}
