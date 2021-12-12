@@ -27,15 +27,16 @@ final class Token
     private $defaultGas = 50000;
 
     /**
-     * Current token contract methods
+     * Current token contract
      * @var Contract
      */
-    public $methods;
+    public $contract;
 
     /**
      * @param string $tokenAddress
+     * @param array $abi
      */
-    public function __construct(string $tokenAddress)
+    public function __construct(string $tokenAddress, array $abi = [])
     {
         if (AddressValidator::validate($tokenAddress) === false) {
             throw new \Exception('Invalid token address!', 23000);
@@ -43,8 +44,8 @@ final class Token
 
         $this->address = $tokenAddress;
         $this->provider = MultiChain::getProvider();
-        $abi = file_get_contents(dirname(__DIR__) . '/resources/abi.json');
-        $this->methods = (new Contract($this->provider::getHttpProvider(), $abi))->at($tokenAddress);
+        $abi = empty($abi) ? file_get_contents(dirname(__DIR__) . '/resources/abi.json') : $abi;
+        $this->contract = (new Contract($this->provider::getHttpProvider(), $abi))->at($tokenAddress);
     }
 
     /**
@@ -71,7 +72,7 @@ final class Token
             'nonce' => $this->provider->getNonce($from),
             'gasPrice' => $this->provider->getGasPrice(),
             'gas' => $this->getEstimateGas($from, $to, $amount),
-            'data' => '0x' . $this->methods->getData('transfer', $to, $hexAmount),
+            'data' => '0x' . $this->contract->getData('transfer', $to, $hexAmount),
         ];
     }
 
@@ -88,7 +89,7 @@ final class Token
     {
         $result = null;
         $amount = Utils::toHex($amount, $this->getDecimals());
-        $this->methods->estimateGas('transfer', $to, $amount, ['from' => $from], function($err, $res) use (&$result) {
+        $this->contract->estimateGas('transfer', $to, $amount, ['from' => $from], function($err, $res) use (&$result) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
@@ -111,7 +112,7 @@ final class Token
     public function getDecimals() : int
     {
         $result = null;
-        $this->methods->call('decimals', function($err, $res) use (&$result) {
+        $this->contract->call('decimals', function($err, $res) use (&$result) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
@@ -136,7 +137,7 @@ final class Token
     public function getBalance(string $address) : float
     {
         $result = null;
-        $this->methods->call('balanceOf', $address, function($err, $res) use (&$result) {
+        $this->contract->call('balanceOf', $address, function($err, $res) use (&$result) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
@@ -160,7 +161,7 @@ final class Token
     public function getName() : ?string
     {
         $name = null;
-        $this->methods->call('name', function($err, $res) use (&$name) {
+        $this->contract->call('name', function($err, $res) use (&$name) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
@@ -180,7 +181,7 @@ final class Token
     public function getSymbol() : ?string
     {
         $symbol = null;
-        $this->methods->call('symbol', function($err, $res) use (&$symbol) {
+        $this->contract->call('symbol', function($err, $res) use (&$symbol) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
@@ -200,7 +201,7 @@ final class Token
     public function getTotalSupply() : string
     {
         $totalSupply = null;
-        $this->methods->call('totalSupply', function($err, $res) use (&$totalSupply) {
+        $this->contract->call('totalSupply', function($err, $res) use (&$totalSupply) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
@@ -224,5 +225,24 @@ final class Token
     public function getAddress() : string
     {
         return $this->address;
+    }
+
+    /**
+     * @param string $name
+     * @param array $args
+     * @return mixed
+     */
+    public function __call(string $name, array $args)
+    {
+        $result = null;
+        $this->contract->call($name, $args, function($err, $res) use (&$result) {
+            if ($err) {
+                throw new \Exception($err->getMessage(), $err->getCode());
+            } else {
+                $result = $res;
+            }
+        });
+
+        return $result;
     }
 }
