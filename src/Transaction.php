@@ -110,7 +110,7 @@ final class Transaction
             $tokenAddress = null;
         }
 
-        if (!is_null($tokenAddress) && AddressValidator::validate($tokenAddress) === false) {
+        if (!is_null($tokenAddress) && AddressValidator::validate($tokenAddress = strtolower($tokenAddress)) === false) {
             throw new \Exception('Invalid token address!', 23000);
         }
 
@@ -145,8 +145,7 @@ final class Transaction
             $tokenAddress = null;
         }
 
-        $receiver = strtolower($receiver);
-        if (AddressValidator::validate($receiver) === false) {
+        if (AddressValidator::validate($receiver = strtolower($receiver)) === false) {
             throw new \Exception('Invalid receiver address!', 22000);
         }
 
@@ -154,7 +153,7 @@ final class Transaction
             throw new \Exception("The amount cannot be zero or less than zero!", 20000);
         } 
 
-        if (!is_null($tokenAddress) && AddressValidator::validate($tokenAddress) === false) {
+        if (!is_null($tokenAddress) && AddressValidator::validate($tokenAddress = strtolower($tokenAddress)) === false) {
             throw new \Exception('Invalid token address!', 23000);
         }
 
