@@ -28,6 +28,18 @@ final class CurrencyConverter
     ];
 
     /**
+     * @var array
+     */
+    private $stableCoins = [
+        'USDT',
+        'USDC',
+        'DAI',
+        'BUSD',
+        'UST',
+        'TUSD'
+    ];
+
+    /**
      * @param string $api
      * @param string|null $apiKey
      * @throws Exception
@@ -72,6 +84,10 @@ final class CurrencyConverter
     {
         $this->checkUsedApi('coinmarketcap');
         
+        if ($this->isStableCoin($from, $to)) {
+            return floatval($amount);
+        }
+
         $parameters = [
             'amount' => $amount,
             'symbol' => $from,
@@ -117,6 +133,10 @@ final class CurrencyConverter
     public function convertWithCryptoCompare(string $from, string $to, float $amount) : ?float
     {
         $this->checkUsedApi('cryptocompare');
+
+        if ($this->isStableCoin($from, $to)) {
+            return floatval($amount);
+        }
 
         $apiUrl =  $this->apiUrl . '?fsym=' . $from . '&tsyms=' . $to;
         $convertData = json_decode(file_get_contents($apiUrl));
@@ -177,5 +197,30 @@ final class CurrencyConverter
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $from
+     * @param string $to
+     * @return boolean
+     */
+    private function isStableCoin(string $from, string $to) : bool
+    {
+        if (strtoupper($from) == 'USD' || strtoupper($to) == 'USD') {
+            if (in_array(strtoupper($from), $this->stableCoins) || in_array(strtoupper($to), $this->stableCoins)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array $symbols
+     * @return void
+     */
+    private function addStableCoins(array $symbols) : void
+    {
+        $this->stableCoins = array_merge($this->stableCoins, $symbols);
     }
 }

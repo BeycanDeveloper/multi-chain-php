@@ -106,6 +106,10 @@ final class Transaction
      */
     public function verify(?string $tokenAddress = null) : string
     {
+        if ($tokenAddress == $this->provider->getCurrency()->symbol) {
+            $tokenAddress = null;
+        }
+
         if (!is_null($tokenAddress) && AddressValidator::validate($tokenAddress) === false) {
             throw new \Exception('Invalid token address!', 23000);
         }
@@ -137,6 +141,10 @@ final class Transaction
      */
     public function verifyData(string $receiver, float $amount, ?string $tokenAddress = null) : string
     {
+        if ($tokenAddress == $this->provider->getCurrency()->symbol) {
+            $tokenAddress = null;
+        }
+
         $receiver = strtolower($receiver);
         if (AddressValidator::validate($receiver) === false) {
             throw new \Exception('Invalid receiver address!', 22000);
@@ -146,10 +154,8 @@ final class Transaction
             throw new \Exception("The amount cannot be zero or less than zero!", 20000);
         } 
 
-        if (!is_null($tokenAddress)) {
-            if (AddressValidator::validate($tokenAddress) === false) {
-                throw new \Exception('Invalid token address!', 23000);
-            }
+        if (!is_null($tokenAddress) && AddressValidator::validate($tokenAddress) === false) {
+            throw new \Exception('Invalid token address!', 23000);
         }
 
         if (is_null($tokenAddress)) {

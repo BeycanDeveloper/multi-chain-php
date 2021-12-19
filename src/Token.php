@@ -2,7 +2,7 @@
 
 namespace Beycan\MultiChain;
 
-use Web3\Contract;
+use Web3\Contract as Web3Contract;
 use Web3\Validators\AddressValidator;
 use phpseclib\Math\BigInteger as BigNumber;
 
@@ -28,7 +28,7 @@ final class Token
 
     /**
      * Current token contract
-     * @var Contract
+     * @var Web3Contract
      */
     public $contract;
 
@@ -45,7 +45,7 @@ final class Token
         $this->address = $tokenAddress;
         $this->provider = MultiChain::getProvider();
         $abi = empty($abi) ? file_get_contents(dirname(__DIR__) . '/resources/abi.json') : $abi;
-        $this->contract = (new Contract($this->provider::getHttpProvider(), $abi))->at($tokenAddress);
+        $this->contract = (new Web3Contract($this->provider::getHttpProvider(), $abi))->at($tokenAddress);
     }
 
     /**

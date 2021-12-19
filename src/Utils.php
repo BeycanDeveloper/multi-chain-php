@@ -110,4 +110,20 @@ final class Utils
         }
     }
 
+    /**
+     * @param string $amount
+     * @param integer $decimals
+     * @return string
+     */
+    public static function toNumber(string $amount, int $decimals) : string
+    {
+        $pos = stripos((string) $amount, 'E-');
+    
+        if ($pos !== false) {
+            $amount = number_format($amount, $decimals, '.', ',');
+        }
+    
+        return rtrim($amount, '0');
+    }
+
 }
