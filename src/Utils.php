@@ -101,13 +101,15 @@ final class Utils
         $length = '1' . str_repeat('0', $decimals);
         $bnt = new BigNumber($length);
 
+        $amount = $bn->divide($bnt)[1]->toString();
+        $length = '1' . str_repeat('0', $decimals);
+        $result = (float) bcdiv($amount, $length, $decimals);
+
         if ($bn->divide($bnt)[0]->toString() != 0) {
-            return (float) $bn->divide($bnt)[0]->toString();
-        } else {
-            $amount = $bn->divide($bnt)[1]->toString();
-            $length = '1' . str_repeat('0', $decimals);
-            return (float) bcdiv($amount, $length, $decimals);
-        }
+            $result += (float) $bn->divide($bnt)[0]->toString();
+        } 
+
+        return $result;
     }
 
     /**
