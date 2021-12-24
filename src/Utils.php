@@ -104,10 +104,7 @@ final class Utils
         $amount = $bn->divide($bnt)[1]->toString();
         $length = '1' . str_repeat('0', $decimals);
         $result = (float) bcdiv($amount, $length, $decimals);
-
-        if ($bn->divide($bnt)[0]->toString() != 0) {
-            $result += (float) $bn->divide($bnt)[0]->toString();
-        } 
+        $result += (float) $bn->divide($bnt)[0]->toString();
 
         return $result;
     }
@@ -117,7 +114,7 @@ final class Utils
      * @param integer $decimals
      * @return string
      */
-    public static function toNumber(string $amount, int $decimals) : string
+    public static function toString(string $amount, int $decimals) : string
     {
         $pos = stripos((string) $amount, 'E-');
     
@@ -125,7 +122,7 @@ final class Utils
             $amount = number_format($amount, $decimals, '.', ',');
         }
     
-        return rtrim($amount, '0');
+        return $amount > 1 ? $amount : rtrim($amount, '0');
     }
 
 }
