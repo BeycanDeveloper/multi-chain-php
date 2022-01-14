@@ -92,7 +92,7 @@ final class Transaction
 
         if ($input != '0x') {
             $input = str_replace($method, '', $input);
-            $receiver = '0x' . ltrim(substr($input, 0, 64), 0);
+            $receiver = '0x' . substr(substr($input, 0, 64), 24);
             $amount = '0x' . ltrim(substr($input, 64), 0);
             return (object) compact('receiver', 'amount');
         } else {
