@@ -2,7 +2,7 @@
 
 namespace Beycan\MultiChain;
 
-use \Web3\Utils as Web3Utils;
+use InvalidArgumentException;
 use phpseclib\Math\BigInteger as BigNumber;
 
 final class Utils
@@ -51,7 +51,7 @@ final class Utils
      */
     public static function toBigNumber($number, int $decimals) : BigNumber
     {
-        $bn = Web3Utils::toBn($number);
+        $bn = self::toBn($number);
         $length = '1' . str_repeat('0', $decimals);
 
         $bnt = new BigNumber($length);
@@ -97,12 +97,11 @@ final class Utils
      */
     public static function toDec(string $amount, int $decimals) : float
     {
-        $bn = Web3Utils::toBn($amount);
+        $bn = self::toBn($amount);
         $length = '1' . str_repeat('0', $decimals);
         $bnt = new BigNumber($length);
 
         $amount = $bn->divide($bnt)[1]->toString();
-        $length = '1' . str_repeat('0', $decimals);
         $result = (float) bcdiv($amount, $length, $decimals);
         $result += (float) $bn->divide($bnt)[0]->toString();
 
@@ -125,4 +124,111 @@ final class Utils
         return $amount > 1 ? $amount : rtrim($amount, '0');
     }
 
+    /**
+     *
+     * @param $number
+     * @return void
+     */
+    public static function toBn($number)
+    {
+        if ($number instanceof BigNumber){
+            $bn = $number;
+        } elseif (is_int($number)) {
+            $bn = new BigNumber($number);
+        } elseif (is_numeric($number)) {
+            $number = (string) $number;
+
+            if (self::isNegative($number)) {
+                $count = 1;
+                $number = str_replace('-', '', $number, $count);
+                $negative1 = new BigNumber(-1);
+            }
+            if (strpos($number, '.') > 0) {
+                $comps = explode('.', $number);
+
+                if (count($comps) > 2) {
+                    throw new InvalidArgumentException('toBn number must be a valid number.');
+                }
+                $whole = $comps[0];
+                $fraction = $comps[1];
+
+                return [
+                    new BigNumber($whole),
+                    new BigNumber($fraction),
+                    strlen($comps[1]),
+                    isset($negative1) ? $negative1 : false
+                ];
+            } else {
+                $bn = new BigNumber($number);
+            }
+            if (isset($negative1)) {
+                $bn = $bn->multiply($negative1);
+            }
+        } elseif (is_string($number)) {
+            $number = mb_strtolower($number);
+
+            if (self::isNegative($number)) {
+                $count = 1;
+                $number = str_replace('-', '', $number, $count);
+                $negative1 = new BigNumber(-1);
+            }
+            if (self::isZeroPrefixed($number) || preg_match('/[a-f]+/', $number) === 1) {
+                $number = self::stripZero($number);
+                $bn = new BigNumber($number, 16);
+            } elseif (empty($number)) {
+                $bn = new BigNumber(0);
+            } else {
+                throw new InvalidArgumentException('toBn number must be valid hex string.');
+            }
+            if (isset($negative1)) {
+                $bn = $bn->multiply($negative1);
+            }
+        } else {
+            throw new InvalidArgumentException('toBn number must be BigNumber, string or int.');
+        }
+        return $bn;
+    }
+
+    /**
+     * isNegative
+     * 
+     * @param string
+     * @return bool
+     */
+    public static function isNegative($value)
+    {
+        if (!is_string($value)) {
+            throw new InvalidArgumentException('The value to isNegative function must be string.');
+        }
+        return (strpos($value, '-') === 0);
+    }
+
+    /**
+     * isZeroPrefixed
+     * 
+     * @param string
+     * @return bool
+     */
+    public static function isZeroPrefixed($value)
+    {
+        if (!is_string($value)) {
+            throw new InvalidArgumentException('The value to isZeroPrefixed function must be string.');
+        }
+        return (strpos($value, '0x') === 0);
+    }
+
+    /**
+     * stripZero
+     * 
+     * @param string $value
+     * @return string
+     */
+    public static function stripZero($value)
+    {
+        if (self::isZeroPrefixed($value)) {
+            $count = 1;
+            return str_replace('0x', '', $value, $count);
+        }
+        return $value;
+    }
 }

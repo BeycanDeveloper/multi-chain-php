@@ -20,12 +20,6 @@ final class Contract
     private $address;
 
     /**
-     * Default gas
-     * @var int
-     */
-    private $defaultGas = 50000;
-
-    /**
      * web3 contract
      * @var Web3Contract
      */
@@ -47,43 +41,24 @@ final class Contract
     }
 
     /**
-     * get token name
-     *
+     * @param string $method
+     * @param array $params
      * @return string|null
      * @throws Exception
      */
-    public function getName() : ?string
+    public function getEstimateGas(string $method, ...$params) : ?string
     {
-        $name = null;
-        $this->contract->call('name', function($err, $res) use (&$name) {
+        $result = null;
+        call_user_func_array([$this->contract, 'estimateGas'], [$method, ...$params, function($err, $res) use (&$result) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
-                $name = end($res);
+                $result = $res;
             }
-        });
+        }]);
 
-        return $name;
-    }
 
-    /**
-     * get token symbol
-     *
-     * @return string|null
-     * @throws Exception
-     */
-    public function getSymbol() : ?string
-    {
-        $symbol = null;
-        $this->contract->call('symbol', function($err, $res) use (&$symbol) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $symbol = end($res);
-            }
-        });
-
-        return $symbol;
+        return $result;
     }
 
     /**
@@ -96,20 +71,20 @@ final class Contract
     }
 
     /**
-     * @param string $name
-     * @param array $args
+     * @param string $method
+     * @param array $params
      * @return mixed
      */
-    public function __call(string $name, array $args)
+    public function __call(string $method, array $params)
     {
         $result = null;
-        $this->contract->call($name, $args, function($err, $res) use (&$result) {
+        call_user_func_array([$this->contract, 'call'], [$method, ...$params, function($err, $res) use (&$result) {
             if ($err) {
                 throw new \Exception($err->getMessage(), $err->getCode());
             } else {
                 $result = $res;
             }
-        });
+        }]);
 
         return $result;
     }

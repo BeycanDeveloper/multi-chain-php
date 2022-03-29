@@ -2,7 +2,6 @@
 
 namespace Beycan\MultiChain;
 
-use Web3\Contract as Web3Contract;
 use Web3\Validators\AddressValidator;
 use phpseclib\Math\BigInteger as BigNumber;
 
@@ -45,7 +44,7 @@ final class Token
         $this->address = $tokenAddress;
         $this->provider = MultiChain::getProvider();
         $abi = empty($abi) ? file_get_contents(dirname(__DIR__) . '/resources/abi.json') : $abi;
-        $this->contract = (new Web3Contract($this->provider::getHttpProvider(), $abi))->at($tokenAddress);
+        $this->contract = (new Contract($tokenAddress, json_decode($abi)));
     }
 
     /**
@@ -87,15 +86,8 @@ final class Token
      */
     public function getEstimateGas(string $from, string $to, float $amount) : string
     {
-        $result = null;
         $amount = Utils::toHex($amount, $this->getDecimals());
-        $this->contract->estimateGas('transfer', $to, $amount, ['from' => $from], function($err, $res) use (&$result) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $result = $res;
-            }
-        });
+        $result = $this->contract->getEstimateGas('transfer', $to, $amount, ['from' => $from]);
 
         if ($result instanceof BigNumber) {
             return Utils::hex($result->toString());
@@ -111,14 +103,7 @@ final class Token
      */
     public function getDecimals() : int
     {
-        $result = null;
-        $this->contract->call('decimals', function($err, $res) use (&$result) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $result = $res;
-            }
-        });
+        $result = $this->contract->decimals();
 
         if (is_array($result) && $result[0] instanceof BigNumber) {
             return intval($result[0]->toString());
@@ -136,14 +121,7 @@ final class Token
      */
     public function getBalance(string $address) : float
     {
-        $result = null;
-        $this->contract->call('balanceOf', $address, function($err, $res) use (&$result) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $result = $res;
-            }
-        });
+        $result = $this->contract->balanceOf($address);
 
         if (is_array($result) && $result['balance'] instanceof BigNumber) {
             return Utils::toDec($result['balance']->toString(), $this->getDecimals());
@@ -160,16 +138,7 @@ final class Token
      */
     public function getName() : ?string
     {
-        $name = null;
-        $this->contract->call('name', function($err, $res) use (&$name) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $name = end($res);
-            }
-        });
-
-        return $name;
+        return $this->contract->name();
     }
 
     /**
@@ -180,16 +149,7 @@ final class Token
      */
     public function getSymbol() : ?string
     {
-        $symbol = null;
-        $this->contract->call('symbol', function($err, $res) use (&$symbol) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $symbol = end($res);
-            }
-        });
-
-        return $symbol;
+        return $this->contract->symbol();
     }
 
     /**
@@ -200,15 +160,8 @@ final class Token
      */
     public function getTotalSupply() : string
     {
-        $totalSupply = null;
-        $this->contract->call('totalSupply', function($err, $res) use (&$totalSupply) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $totalSupply = $res;
-            }
-        });
-
+        $totalSupply = $this->contract->totalSupply();
+        
         if (is_array($totalSupply) && end($totalSupply) instanceof BigNumber) {
             $totalSupply = Utils::toDec(end($totalSupply)->toString(), 
             $this->getDecimals());
@@ -234,15 +187,6 @@ final class Token
      */
     public function __call(string $name, array $args)
     {
-        $result = null;
-        $this->contract->call($name, $args, function($err, $res) use (&$result) {
-            if ($err) {
-                throw new \Exception($err->getMessage(), $err->getCode());
-            } else {
-                $result = $res;
-            }
-        });
-
-        return $result;
+        return $this->contract->$name(...$args);
     }
 }
